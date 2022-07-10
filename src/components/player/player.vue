@@ -12,34 +12,119 @@
           <h1 class="title">{{ currentSong.name }}</h1>
           <h2 class="subtitle">{{ currentSong.singer }}</h2>
         </div>
+        <div class="bottom">
+          <div class="operators">
+            <div class="icon i-left">
+              <i :class="modeIcon" @click="changeMode"></i>
+            </div>
+            <div class="icon i-left" :class="disableCls">
+              <i class="icon-prev" @click="prev"></i>
+            </div>
+            <div class="icon i-center" :class="disableCls">
+              <i :class="playIcon" @click="togglePlay"></i>
+            </div>
+            <div class="icon i-right" :class="disableCls">
+              <i class="icon-next" @click="next"></i>
+            </div>
+            <div class="icon i-right">
+              <i class="icon-not-favorite"></i>
+            </div>
+          </div>
+        </div>
       </template>
     </div>
-    <audio ref="audioRef"></audio>
+    <audio
+      ref="audioRef"
+      @pause="pause"
+      @canplay="ready"
+      @error="error"
+      :loop="isLoop"
+    ></audio>
   </div>
 </template>
 
 <script setup>
 import { computed, ref, watch } from "vue";
 import { usePlayStore } from "@/store/play";
+import useMode from "./use-mode";
+import { PLAY_MODE } from "@/assets/js/constant";
 
 const playStore = usePlayStore();
 
 const audioRef = ref(null);
+const songReady = ref(false);
 
 const fullScreen = computed(() => playStore.fullScreen);
 const currentSong = computed(() => playStore.currentSong);
+const playing = computed(() => playStore.playing);
+const currentIndex = computed(() => playStore.currentIndex);
+const playList = computed(() => playStore.playList);
+const playIcon = computed(() => (playing.value ? "icon-pause" : "icon-play"));
+const disableCls = computed(() => (songReady.value ? "" : "disable"));
+const { modeIcon, changeMode } = useMode();
+const isLoop = computed(() => playStore.playMode === PLAY_MODE.loop);
 
 watch(currentSong, (newSong) => {
   if (!newSong.id || !newSong.url) {
     return;
   }
+  songReady.value = false;
   const audioEl = audioRef.value;
   audioEl.src = newSong.url;
   audioEl.play();
+  playStore.setPlayingState(true);
+});
+watch(playing, (newPlaying) => {
+  if (!songReady.value) return;
+  const audioEl = audioRef.value;
+  newPlaying ? audioEl.play() : audioEl.pause();
 });
 
 function goBack() {
   playStore.setFullScreen(false);
+}
+function togglePlay() {
+  if (!songReady.value) return;
+  playStore.setPlayingState(!playStore.playing);
+}
+function pause() {
+  playStore.setPlayingState(false);
+}
+function prev() {
+  const list = playList.value;
+  if (!songReady.value || !list.length) {
+    return;
+  } else {
+    if (list.length === 1) {
+      loop();
+    }
+    const prevIndex = (currentIndex.value - 1 + list.length) % list.length;
+    playStore.setCurrentIndex(prevIndex);
+  }
+}
+function next() {
+  const list = playList.value;
+  if (!songReady.value || !list.length) {
+    return;
+  } else {
+    if (list.length === 1) {
+      loop();
+    }
+    const nextIndex = (currentIndex.value + 1) % list.length;
+    playStore.setCurrentIndex(nextIndex);
+  }
+}
+function loop() {
+  const audioEl = audioRef.value;
+  audioEl.currentTime = 0;
+  audioEl.play();
+}
+function ready() {
+  if (songReady.value) return;
+  songReady.value = true;
+}
+function error() {
+  songReady.value = true;
 }
 </script>
 

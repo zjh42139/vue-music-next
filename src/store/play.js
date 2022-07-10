@@ -49,7 +49,19 @@ export const usePlayStore = defineStore("play", {
       this.setPlayingState(true);
       this.setFullScreen(true);
       this.setPlayList(shuffle(list));
-      this.setCurrentIndex(index);
+      this.setCurrentIndex(0);
+    },
+    changeMode(mode) {
+      const oldSongId = this.currentSong.id;
+      if (mode === PLAY_MODE.random) {
+        this.setPlayList(shuffle(this.sequenceList));
+      } else {
+        this.setPlayList(this.sequenceList);
+      }
+      const newIndex = this.playList.findIndex((song) => song.id === oldSongId);
+
+      this.setCurrentIndex(newIndex);
+      this.setPlayMode(mode);
     },
   },
 });
