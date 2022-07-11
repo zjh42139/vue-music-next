@@ -12,7 +12,55 @@
           <h1 class="title">{{ currentSong.name }}</h1>
           <h2 class="subtitle">{{ currentSong.singer }}</h2>
         </div>
+        <div class="middle" @click="togglePage">
+          <div class="middle-l" :style="middleLStyle" v-show="showCover">
+            <div class="cd-wrapper">
+              <div class="cd">
+                <img
+                  class="image playing"
+                  ref="imageRef"
+                  :style="cdStyle"
+                  :src="currentSong.pic"
+                />
+              </div>
+            </div>
+            <div class="playing-lyric-wrapper">
+              <div class="playing-lyric">{{ playingLyric }}</div>
+            </div>
+          </div>
+          <scroll class="middle-r" :style="middleRStyle" ref="lyricScrollRef">
+            <div class="lyric-wrapper">
+              <div v-if="currentLyric" ref="lyricListRef">
+                <p
+                  class="text"
+                  :class="{ current: currentLineNum === index }"
+                  v-for="(line, index) in currentLyric.lines"
+                  :key="line.num"
+                >
+                  {{ line.txt }}
+                </p>
+              </div>
+              <div class="pure-music" v-show="pureMusicLyric">
+                <p>{{ pureMusicLyric }}</p>
+              </div>
+            </div>
+          </scroll>
+        </div>
+
         <div class="bottom">
+          <div class="progress-wrapper">
+            <span class="time time-l">{{ formatTime(currentTime) }}</span>
+            <div class="progress-bar-wrapper">
+              <progress-bar
+                :progress="progress"
+                @progress-changing="onProgressChanging"
+                @progress-changed="onProgressChanged"
+              ></progress-bar>
+            </div>
+            <span class="time time-r">{{
+              formatTime(currentSong.duration)
+            }}</span>
+          </div>
           <div class="operators">
             <div class="icon i-left">
               <i :class="modeIcon" @click="changeMode"></i>
@@ -27,7 +75,10 @@
               <i class="icon-next" @click="next"></i>
             </div>
             <div class="icon i-right">
-              <i class="icon-not-favorite"></i>
+              <i
+                :class="getFavoriteIcon(currentSong)"
+                @click="toggleFavorite(currentSong)"
+              ></i>
             </div>
           </div>
         </div>
@@ -35,10 +86,12 @@
     </div>
     <audio
       ref="audioRef"
+      :loop="isLoop"
       @pause="pause"
       @canplay="ready"
       @error="error"
-      :loop="isLoop"
+      @timeupdate="updateTime"
+      @ended="next"
     ></audio>
   </div>
 </template>
@@ -47,12 +100,22 @@
 import { computed, ref, watch } from "vue";
 import { usePlayStore } from "@/store/play";
 import useMode from "./use-mode";
+import useFavorite from "./use-favorite";
+import useLyric from "./use-lyric";
+import useMiddleInteractive from "./use-middle-interactive";
+import ProgressBar from "./progress-bar";
+import Scroll from "../base/scroll/scroll";
+import { formatTime } from "@/assets/js/util";
+import { removeClass, addClass } from "@/assets/js/dom";
 import { PLAY_MODE } from "@/assets/js/constant";
 
 const playStore = usePlayStore();
 
 const audioRef = ref(null);
 const songReady = ref(false);
+const currentTime = ref(0);
+const imageRef = ref(null);
+let progressChanging = false;
 
 const fullScreen = computed(() => playStore.fullScreen);
 const currentSong = computed(() => playStore.currentSong);
@@ -60,24 +123,57 @@ const playing = computed(() => playStore.playing);
 const currentIndex = computed(() => playStore.currentIndex);
 const playList = computed(() => playStore.playList);
 const playIcon = computed(() => (playing.value ? "icon-pause" : "icon-play"));
+const progress = computed(() => currentTime.value / currentSong.value.duration);
 const disableCls = computed(() => (songReady.value ? "" : "disable"));
 const { modeIcon, changeMode } = useMode();
+const { getFavoriteIcon, toggleFavorite } = useFavorite();
+const {
+  lyricScrollRef,
+  lyricListRef,
+  pureMusicLyric,
+  playingLyric,
+  currentLyric,
+  currentLineNum,
+  playLyric,
+  stopLyric,
+} = useLyric({
+  songReady,
+  currentTime,
+});
+const { showCover, togglePage } = useMiddleInteractive();
 const isLoop = computed(() => playStore.playMode === PLAY_MODE.loop);
+const cdStyle = computed(() => ({
+  "animation-play-state": playing.value ? "running" : "paused",
+}));
 
 watch(currentSong, (newSong) => {
   if (!newSong.id || !newSong.url) {
     return;
   }
+  currentTime.value = 0;
   songReady.value = false;
   const audioEl = audioRef.value;
   audioEl.src = newSong.url;
   audioEl.play();
   playStore.setPlayingState(true);
+
+  const imageEl = imageRef.value;
+  if (imageEl) {
+    removeClass(imageEl, "playing");
+    imageEl.offsetWidth;
+    addClass(imageEl, "playing");
+  }
 });
 watch(playing, (newPlaying) => {
   if (!songReady.value) return;
   const audioEl = audioRef.value;
-  newPlaying ? audioEl.play() : audioEl.pause();
+  if (newPlaying) {
+    audioEl.play();
+    playLyric();
+  } else {
+    audioEl.pause();
+    stopLyric();
+  }
 });
 
 function goBack() {
@@ -118,13 +214,29 @@ function loop() {
   const audioEl = audioRef.value;
   audioEl.currentTime = 0;
   audioEl.play();
+  playStore.setPlayingState(true);
 }
 function ready() {
   if (songReady.value) return;
   songReady.value = true;
+  playLyric();
 }
 function error() {
   songReady.value = true;
+}
+function updateTime(e) {
+  if (!progressChanging) currentTime.value = e.target.currentTime;
+}
+function onProgressChanging(progress) {
+  progressChanging = true;
+  currentTime.value = progress * currentSong.value.duration;
+}
+function onProgressChanged(progress) {
+  progressChanging = false;
+  currentTime.value = progress * currentSong.value.duration;
+  audioRef.value.currentTime = progress * currentSong.value.duration;
+  playLyric();
+  if (!playing.value) stopLyric();
 }
 </script>
 

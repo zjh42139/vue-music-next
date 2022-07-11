@@ -1,6 +1,7 @@
 import { computed } from "vue";
 import { usePlayStore } from "@/store/play";
-import { PLAY_MODE } from "@/assets/js/constant";
+import { PLAY_MODE, MODE_KEY } from "@/assets/js/constant";
+import storage from "good-storage";
 
 export default function useMode() {
   const playStore = usePlayStore();
@@ -18,6 +19,7 @@ export default function useMode() {
   function changeMode() {
     const mode = (playStore.playMode + 1) % 3;
     playStore.changeMode(mode);
+    storage.set(MODE_KEY, mode);
   }
 
   return {
