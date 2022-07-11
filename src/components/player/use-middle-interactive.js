@@ -1,16 +1,92 @@
 import { ref } from "vue";
 
 export default function useMiddleInteractive() {
-  const showCover = ref(true);
+  const currentShow = ref("cd");
   const middleLStyle = ref(null);
   const middleRStyle = ref(null);
-  function togglePage() {
-    showCover.value = !showCover.value;
+
+  const touch = {};
+  let currentView = "cd";
+  function onMiddleTouchStart(e) {
+    touch.startX = e.touches[0].pageX;
+    touch.startY = e.touches[0].pageY;
+    touch.directionLocked = "";
+  }
+  function onMiddleTouchMove(e) {
+    const deltaX = e.touches[0].pageX - touch.startX;
+    const deltaY = e.touches[0].pageY - touch.startY;
+
+    const absDelatX = Math.abs(deltaX);
+    const absDelatY = Math.abs(deltaY);
+
+    if (!touch.directionLocked) {
+      touch.directionLocked = absDelatX >= absDelatY ? "h" : "v";
+    }
+
+    if (touch.directionLocked === "v") {
+      return;
+    }
+
+    const left = currentView === "cd" ? 0 : -window.innerWidth;
+    const offsetWidth = Math.min(
+      0,
+      Math.max(-window.innerWidth, left + deltaX)
+    );
+    touch.percent = Math.abs(offsetWidth / window.innerWidth);
+    if (currentView === "cd") {
+      if (touch.percent > 0.2) {
+        currentShow.value = "lyric";
+      } else {
+        currentShow.value = "cd";
+      }
+    } else {
+      if (touch.percent < 0.8) {
+        currentShow.value = "cd";
+      } else {
+        currentShow.value = "lyric";
+      }
+    }
+
+    middleLStyle.value = {
+      opacity: 1 - touch.percent,
+      transitionDuration: "0ms",
+    };
+
+    middleRStyle.value = {
+      transform: `translateX(${offsetWidth}px)`,
+      transitionDuration: "0ms",
+    };
+  }
+  function onMiddleTouchEnd() {
+    let offsetWidth;
+    let opacity;
+    if (currentShow.value === "cd") {
+      currentView = "cd";
+      offsetWidth = 0;
+      opacity = 1;
+    } else {
+      currentView = "lyric";
+      offsetWidth = -window.innerWidth;
+      opacity = 0;
+    }
+
+    const duration = 300;
+    middleLStyle.value = {
+      opacity,
+      transitionDuration: `${duration}ms`,
+    };
+
+    middleRStyle.value = {
+      transform: `translateX(${offsetWidth}px)`,
+      transitionDuration: `${duration}ms`,
+    };
   }
   return {
-    showCover,
-    togglePage,
+    currentShow,
     middleLStyle,
     middleRStyle,
+    onMiddleTouchStart,
+    onMiddleTouchMove,
+    onMiddleTouchEnd,
   };
 }

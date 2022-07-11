@@ -12,8 +12,13 @@
           <h1 class="title">{{ currentSong.name }}</h1>
           <h2 class="subtitle">{{ currentSong.singer }}</h2>
         </div>
-        <div class="middle" @click="togglePage">
-          <div class="middle-l" :style="middleLStyle" v-show="showCover">
+        <div
+          class="middle"
+          @touchstart="onMiddleTouchStart"
+          @touchmove="onMiddleTouchMove"
+          @touchend="onMiddleTouchEnd"
+        >
+          <div class="middle-l" :style="middleLStyle">
             <div class="cd-wrapper">
               <div class="cd">
                 <img
@@ -28,6 +33,7 @@
               <div class="playing-lyric">{{ playingLyric }}</div>
             </div>
           </div>
+
           <scroll class="middle-r" :style="middleRStyle" ref="lyricScrollRef">
             <div class="lyric-wrapper">
               <div v-if="currentLyric" ref="lyricListRef">
@@ -48,6 +54,11 @@
         </div>
 
         <div class="bottom">
+          <div class="dot-wrapper">
+            <span class="dot" :class="{ active: currentShow === 'cd' }"> </span>
+            <span class="dot" :class="{ active: currentShow === 'lyric' }">
+            </span>
+          </div>
           <div class="progress-wrapper">
             <span class="time time-l">{{ formatTime(currentTime) }}</span>
             <div class="progress-bar-wrapper">
@@ -140,7 +151,14 @@ const {
   songReady,
   currentTime,
 });
-const { showCover, togglePage } = useMiddleInteractive();
+const {
+  currentShow,
+  middleLStyle,
+  middleRStyle,
+  onMiddleTouchStart,
+  onMiddleTouchMove,
+  onMiddleTouchEnd,
+} = useMiddleInteractive();
 const isLoop = computed(() => playStore.playMode === PLAY_MODE.loop);
 const cdStyle = computed(() => ({
   "animation-play-state": playing.value ? "running" : "paused",
