@@ -42,7 +42,7 @@
 
 <script setup>
 import { defineProps, defineEmits } from "vue";
-import Scroll from "@/components/base/scroll/scroll";
+import Scroll from "@/components/wrap-scroll";
 import useFiexd from "./use-fixed";
 import useShortcut from "./use-shortcut";
 

@@ -37,7 +37,7 @@
 import { ref, defineProps, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import SongList from "@/components/base/song-list/song-list";
-import Scroll from "@/components/base/scroll/scroll";
+import Scroll from "@/components/wrap-scroll";
 import { usePlayStore } from "@/store/play";
 
 const RESERVED_HEIGHT = 40;
@@ -65,6 +65,7 @@ const scrollY = ref(0);
 const maxTranslateY = ref(0);
 const bgImage = ref(null);
 
+const playlist = computed(() => playStore.playlist);
 const noResult = computed(() => !props.loading && !props.songs.length);
 const bgImageStyle = computed(() => {
   const scrollYVal = scrollY.value;
@@ -100,7 +101,10 @@ const playBtnStyle = computed(() => {
   }
   return { display };
 });
-const scrollStyle = computed(() => ({ top: `${imageHeight.value}px` }));
+const scrollStyle = computed(() => {
+  const bottom = playlist.value.length ? "60px" : "0";
+  return { top: `${imageHeight.value}px`, bottom };
+});
 const filterStyle = computed(() => {
   let blur = 0;
   const scrollYVal = scrollY.value;

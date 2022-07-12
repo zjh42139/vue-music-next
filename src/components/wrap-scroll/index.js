@@ -9,7 +9,7 @@ import {
   nextTick,
 } from "vue";
 import Scroll from "@/components/base/scroll/scroll";
-// import { useStore } from 'vuex'
+import { usePlayStore } from "@/store/play";
 
 export default {
   name: "wrap-scroll",
@@ -42,13 +42,13 @@ export default {
       return scrollRef.value.scroll;
     });
 
-    // const store = useStore()
-    // const playlist = computed(() => store.state.playlist)
+    const playStore = usePlayStore();
+    const playlist = computed(() => playStore.playlist);
 
-    // watch(playlist, async () => {
-    //   await nextTick();
-    //   scroll.value.refresh();
-    // });
+    watch(playlist, async () => {
+      await nextTick();
+      scroll.value.refresh();
+    });
 
     return {
       scrollRef,

@@ -1,5 +1,5 @@
 <template>
-  <div class="player" v-show="playList.length">
+  <div class="player" v-show="playlist.length">
     <transition
       name="normal"
       @enter="enter"
@@ -148,7 +148,7 @@ const fullScreen = computed(() => playStore.fullScreen);
 const currentSong = computed(() => playStore.currentSong);
 const playing = computed(() => playStore.playing);
 const currentIndex = computed(() => playStore.currentIndex);
-const playList = computed(() => playStore.playList);
+const playlist = computed(() => playStore.playlist);
 const playIcon = computed(() => (playing.value ? "icon-pause" : "icon-play"));
 const progress = computed(() => currentTime.value / currentSong.value.duration);
 const disableCls = computed(() => (songReady.value ? "" : "disable"));
@@ -182,7 +182,8 @@ const cdStyle = computed(() => ({
 }));
 
 watch(currentSong, (newSong) => {
-  if (!newSong.id || !newSong.url) {
+  if (!newSong?.id || !newSong?.url) {
+    playStore.setPlayingState(false);
     return;
   }
   currentTime.value = 0;
@@ -222,7 +223,7 @@ function pause() {
   playStore.setPlayingState(false);
 }
 function prev() {
-  const list = playList.value;
+  const list = playlist.value;
   if (!songReady.value || !list.length) {
     return;
   } else {
@@ -234,7 +235,7 @@ function prev() {
   }
 }
 function next() {
-  const list = playList.value;
+  const list = playlist.value;
   if (!songReady.value || !list.length) {
     return;
   } else {

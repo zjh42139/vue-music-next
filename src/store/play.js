@@ -7,7 +7,7 @@ export const usePlayStore = defineStore("play", {
   state: () => {
     return {
       sequenceList: [],
-      playList: [],
+      playlist: [],
       playing: false,
       playMode: load(MODE_KEY, 0),
       currentIndex: 0,
@@ -16,7 +16,7 @@ export const usePlayStore = defineStore("play", {
     };
   },
   getters: {
-    currentSong: (state) => state.playList[state.currentIndex],
+    currentSong: (state) => state.playlist[state.currentIndex] || {},
   },
   actions: {
     setPlayingState(playing) {
@@ -25,8 +25,8 @@ export const usePlayStore = defineStore("play", {
     setSquenceList(sequenceList) {
       this.sequenceList = sequenceList;
     },
-    setPlayList(playList) {
-      this.playList = playList;
+    setPlayList(playlist) {
+      this.playlist = playlist;
     },
     setPlayMode(playMode) {
       this.playMode = playMode;
@@ -63,7 +63,7 @@ export const usePlayStore = defineStore("play", {
       } else {
         this.setPlayList(this.sequenceList);
       }
-      const newIndex = this.playList.findIndex((song) => song.id === oldSongId);
+      const newIndex = this.playlist.findIndex((song) => song.id === oldSongId);
 
       this.setCurrentIndex(newIndex);
       this.setPlayMode(mode);
@@ -74,5 +74,24 @@ export const usePlayStore = defineStore("play", {
         return item;
       });
     },
+    removeSong(song) {
+      const playlist = this.playlist;
+      const list = playlist.filter((item) => item.id !== song.id);
+      const playIndex = findIndex(playlist, song);
+      if (playIndex < 0) return;
+      if (playIndex < this.currentIndex || playIndex === playlist.length - 1) {
+        this.currentIndex--;
+      }
+      this.setPlayList(list);
+    },
+    clearSongList() {
+      this.setSquenceList([]);
+      this.setPlayList([]);
+      this.setCurrentIndex(0);
+    },
   },
 });
+
+function findIndex(list, song) {
+  return list.findIndex((item) => item.id === song.id);
+}

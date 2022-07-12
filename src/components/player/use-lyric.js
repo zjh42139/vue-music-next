@@ -14,7 +14,7 @@ export default function useLyric({ songReady, currentTime }) {
   const playStore = usePlayStore();
   const currentSong = computed(() => playStore.currentSong);
   watch(currentSong, async (newSong) => {
-    if (!newSong.url || !newSong.id) {
+    if (!newSong?.url || !newSong?.id) {
       return;
     }
     stopLyric();

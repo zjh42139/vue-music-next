@@ -16,6 +16,15 @@ export default function useMode() {
       : "icon-random";
   });
 
+  const modeText = computed(() => {
+    const playModeVal = playMode.value;
+    return playModeVal === PLAY_MODE.sequence
+      ? "顺序播放"
+      : playModeVal === PLAY_MODE.loop
+      ? "单曲循环"
+      : "随机播放";
+  });
+
   function changeMode() {
     const mode = (playStore.playMode + 1) % 3;
     playStore.changeMode(mode);
@@ -24,6 +33,7 @@ export default function useMode() {
 
   return {
     modeIcon,
+    modeText,
     changeMode,
   };
 }

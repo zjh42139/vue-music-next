@@ -15,7 +15,7 @@ import { useRouter } from "vue-router";
 import { getSingerList } from "@/service/singer";
 import storage from "good-storage";
 import { SINGER_KEY } from "@/assets/js/constant";
-import IndexList from "@/components/base/index-list/index-list";
+import IndexList from "@/components/index-list/index-list";
 
 const singers = ref([]);
 const selectedSinger = ref(null);

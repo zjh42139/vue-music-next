@@ -12,8 +12,8 @@ export default function useMiniSlider() {
   const slider = ref(null);
 
   const fullScreen = computed(() => playStore.fullScreen);
-  const playList = computed(() => playStore.playList);
-  const sliderShow = computed(() => !fullScreen.value && playList.value.length);
+  const playlist = computed(() => playStore.playlist);
+  const sliderShow = computed(() => !fullScreen.value && playlist.value.length);
   const currentIndex = computed(() => playStore.currentIndex);
 
   onMounted(() => {
@@ -53,7 +53,7 @@ export default function useMiniSlider() {
   });
 
   onUnmounted(() => {
-    if (slider.value) slider.value.destory();
+    if (slider.value) slider.value.destroy();
   });
 
   return {
